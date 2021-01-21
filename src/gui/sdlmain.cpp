@@ -382,7 +382,8 @@ check_surface:
 #if (HAVE_DDRAW_H) && defined(WIN32)
 check_gotbpp:
 #endif
-		if (sdl.desktop.fullscreen) gotbpp=SDL_VideoModeOK(640,480,testbpp,SDL_FULLSCREEN|SDL_HWSURFACE|SDL_HWPALETTE);
+		// TB changed to 240 lines
+		if (sdl.desktop.fullscreen) gotbpp=SDL_VideoModeOK(640,240,testbpp,SDL_FULLSCREEN|SDL_HWSURFACE|SDL_HWPALETTE);
 		else gotbpp=sdl.desktop.bpp;
 		/* If we can't get our favorite mode check for another working one */
 		switch (gotbpp) {
@@ -1235,7 +1236,8 @@ static void GUI_StartUp(Section * sec) {
 	sdl.overlay=0;
 #if C_OPENGL
    if(sdl.desktop.want_type==SCREEN_OPENGL){ /* OPENGL is requested */
-	sdl.surface=SDL_SetVideoMode_Wrap(640,400,0,SDL_OPENGL);
+	// 240 lines
+	sdl.surface=SDL_SetVideoMode_Wrap(640,240,0,SDL_OPENGL);
 	if (sdl.surface == NULL) {
 		LOG_MSG("Could not initialize OpenGL, switching back to surface");
 		sdl.desktop.want_type=SCREEN_SURFACE;
@@ -1266,7 +1268,8 @@ static void GUI_StartUp(Section * sec) {
 
 #endif	//OPENGL
 	/* Initialize screen for first time */
-	sdl.surface=SDL_SetVideoMode_Wrap(640,400,0,0);
+	// 240 lines
+	sdl.surface=SDL_SetVideoMode_Wrap(640,240,0,0);
 	if (sdl.surface == NULL) E_Exit("Could not initialize video: %s",SDL_GetError());
 	sdl.desktop.bpp=sdl.surface->format->BitsPerPixel;
 	if (sdl.desktop.bpp==24) {
@@ -1287,13 +1290,14 @@ static void GUI_StartUp(Section * sec) {
 //#endif
 
 /* Please leave the Splash screen stuff in working order in DOSBox. We spend a lot of time making DOSBox. */
-	SDL_Surface* splash_surf = SDL_CreateRGBSurface(SDL_SWSURFACE, 640, 400, 32, rmask, gmask, bmask, 0);
-	if (splash_surf) {
+	// 240 lines
+	SDL_Surface* splash_surf = SDL_CreateRGBSurface(SDL_SWSURFACE, 640, 240, 32, rmask, gmask, bmask, 0);
+	if (1==0 && splash_surf) {
 		SDL_FillRect(splash_surf, NULL, SDL_MapRGB(splash_surf->format, 0, 0, 0));
 
-		Bit8u* tmpbufp = new Bit8u[640*400*3];
-		GIMP_IMAGE_RUN_LENGTH_DECODE(tmpbufp,gimp_image.rle_pixel_data,640*400,3);
-		for (Bitu y=0; y<400; y++) {
+		Bit8u* tmpbufp = new Bit8u[640*240*3];
+		GIMP_IMAGE_RUN_LENGTH_DECODE(tmpbufp,gimp_image.rle_pixel_data,640*240,3);
+		for (Bitu y=0; y<240; y++) {
 
 			Bit8u* tmpbuf = tmpbufp + y*640*3;
 			Bit32u * draw=(Bit32u*)(((Bit8u *)splash_surf->pixels)+((y)*splash_surf->pitch));
@@ -1372,12 +1376,15 @@ void Mouse_AutoLock(bool enable) {
 }
 
 static void HandleMouseMotion(SDL_MouseMotionEvent * motion) {
+	// Jornada screen patch, divide screen height by 240 lines of the physical screen
+	// since this will translate to the touchscreen
+	float ymul = sdl.draw.height / 240.0;
 	if (sdl.mouse.locked || !sdl.mouse.autoenable)
 		Mouse_CursorMoved((float)motion->xrel*sdl.mouse.sensitivity/100.0f,
-						  (float)motion->yrel*sdl.mouse.sensitivity/100.0f,
-						  (float)(motion->x-sdl.clip.x)/(sdl.clip.w-1)*sdl.mouse.sensitivity/100.0f,
-						  (float)(motion->y-sdl.clip.y)/(sdl.clip.h-1)*sdl.mouse.sensitivity/100.0f,
-						  sdl.mouse.locked);
+				  (float)motion->yrel*sdl.mouse.sensitivity*ymul/100.0f,
+				  (float)(motion->x-sdl.clip.x)/(sdl.clip.w-1)*sdl.mouse.sensitivity/100.0f,
+				  (float)(motion->y-sdl.clip.y)/(sdl.clip.h-1)*sdl.mouse.sensitivity/100.0f,
+				  sdl.mouse.locked);
 }
 
 static void HandleMouseButton(SDL_MouseButtonEvent * button) {
@@ -1706,7 +1713,8 @@ static void show_warning(char const * const message) {
 #endif
 	printf("%s", message);
 	if(textonly) return;
-	if(!sdl.surface) sdl.surface = SDL_SetVideoMode_Wrap(640,400,0,0);
+	// 240 lines
+	if(!sdl.surface) sdl.surface = SDL_SetVideoMode_Wrap(640,240,0,0);
 	if(!sdl.surface) return;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 	Bit32u rmask = 0xff000000;
@@ -1717,7 +1725,8 @@ static void show_warning(char const * const message) {
 	Bit32u gmask = 0x0000ff00;                    
 	Bit32u bmask = 0x00ff0000;
 #endif
-	SDL_Surface* splash_surf = SDL_CreateRGBSurface(SDL_SWSURFACE, 640, 400, 32, rmask, gmask, bmask, 0);
+	// 240 lines
+	SDL_Surface* splash_surf = SDL_CreateRGBSurface(SDL_SWSURFACE, 640, 240, 32, rmask, gmask, bmask, 0);
 	if (!splash_surf) return;
 
 	int x = 120,y = 20;

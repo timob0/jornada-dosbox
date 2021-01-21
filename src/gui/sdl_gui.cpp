@@ -108,6 +108,8 @@ static GUI::ScreenSDL *UI_Startup(GUI::ScreenSDL *screen) {
 	GFX_GetSize(w, h, fs);
 	if (w < 512) w = 640;
 	if (h < 350) h = 400;
+	// 240 lines
+	h=240;
 
 	old_unicode = SDL_EnableUNICODE(1);
 	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);

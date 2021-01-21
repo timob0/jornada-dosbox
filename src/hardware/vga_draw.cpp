@@ -648,7 +648,7 @@ static void VGA_DrawSingleLine(Bitu /*blah*/) {
 	// Reason: drawing occurs in a 480 lines window in a 240 line buffer. The window is 
         // centered and to avoid content be cut off, we'll fill the top and the bottom
 	int emptylines=0;
-	if (!lowres) {
+	if (1==0 && !lowres) {
 		emptylines = vga.draw.lines_total / 4;
 	}
 
@@ -691,6 +691,13 @@ static void VGA_DrawSingleLine(Bitu /*blah*/) {
 			for (int n=0; n<emptylines; n++) RENDER_DrawLine(TempLine);
 		}
 
+		// Find out if less lines drawn than on screen
+		// then fill in missing lines
+		if (vga.draw.lines_done<480) {
+			memset(TempLine, 0, sizeof(TempLine));
+                        for (int n=0; n<((480-vga.draw.lines_done)/2); n++) RENDER_DrawLine(TempLine);
+		}
+
 		RENDER_EndUpdate(false);
 	}
 }
@@ -702,7 +709,7 @@ static void VGA_DrawPart(Bitu lines) {
 	// Reason: drawing occurs in a 480 lines window in a 240 line buffer. The window is 
         // centered and to avoid content be cut off, we'll fill the top and the bottom
 	int emptylines=0;
-	if (!lowres) {
+	if (1==0 && !lowres) {
 		emptylines = vga.draw.lines_total / 4;
 	}
 
@@ -1550,6 +1557,9 @@ void VGA_SetupDrawing(Bitu /*val*/) {
 		LOG(LOG_VGA,LOG_NORMAL)("%s width, %s height aspect %f",
 			doublewidth ? "double":"normal",doubleheight ? "double":"normal",aspect_ratio);
 #endif
+		
+		// 240 lines
+		if (height>=400) height/=2;		
 		RENDER_SetSize(width,height,bpp,(float)fps,aspect_ratio,doublewidth,doubleheight);
 	}
 }
