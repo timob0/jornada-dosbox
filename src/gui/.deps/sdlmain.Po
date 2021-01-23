@@ -188,8 +188,7 @@ sdlmain.o: sdlmain.cpp /usr/include/stdc-predef.h \
  /usr/include/KHR/khrplatform.h /usr/include/GL/glu.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
- /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h dosbox_logo.h \
- dosbox_splash.h
+ /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h dosbox_logo.h
 
 /usr/include/stdc-predef.h:
 
@@ -708,5 +707,3 @@ sdlmain.o: sdlmain.cpp /usr/include/stdc-predef.h \
 /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h:
 
 dosbox_logo.h:
-
-dosbox_splash.h:
