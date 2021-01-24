@@ -33,10 +33,16 @@
 
 #define VGA_PARTS 4
 
+
+// Interlace would draw odd and even lines alternatingly, looks terrible on Jornada thus turned off.
+#undef INTERLACE
+static Bit8u interlace=0;
+
 typedef Bit8u * (* VGA_Line_Handler)(Bitu vidstart, Bitu line);
 
 static VGA_Line_Handler VGA_DrawLine;
 static Bit8u TempLine[SCALER_MAXWIDTH * 4];
+
 
 static Bit8u * VGA_Draw_1BPP_Line(Bitu vidstart, Bitu line) {
 	const Bit8u *base = vga.tandy.draw_base + ((line & vga.tandy.line_mask) << vga.tandy.line_shift);
@@ -584,20 +590,6 @@ static void VGA_DrawSingleLine(Bitu /*blah*/) {
 	int lowres =  (vga.draw.lines_total<241);
 	int render = (lowres || vga.draw.lines_done % 2);
 
-	// Calculate number of lines to fill above and below with 0
-	// Reason: drawing occurs in a 480 lines window in a 240 line buffer. The window is 
-        // centered and to avoid content be cut off, we'll fill the top and the bottom
-	int emptylines=0;
-	if (1==0 && !lowres) {
-		emptylines = vga.draw.lines_total / 4;
-	}
-
-	// Fill top portion (only in modes with 480 lines or higher)
-	if (vga.draw.lines_done==0 && emptylines && vga.draw.lines_total>=480) {
-		memset(TempLine, 0, sizeof(TempLine));
-		for (int n=0; n<emptylines; n++) RENDER_DrawLine(TempLine);
-	}
-
 	if (GCC_UNLIKELY(vga.attr.disabled)) {
 		// draw blanked line (DoWhackaDo, Alien Carnage, TV sports Football)
 		memset(TempLine, 0, sizeof(TempLine));
@@ -620,24 +612,15 @@ static void VGA_DrawSingleLine(Bitu /*blah*/) {
 	else 
 	// Full VGA Frame drawn, signal renderer done
 	{ 
-		// Fill in blank lines at the bottom
-		if (emptylines) {
-			memset(TempLine, 0, sizeof(TempLine));
-			for (int n=0; n<emptylines; n++) RENDER_DrawLine(TempLine);
-		}
-		// Add the top portion here if less than 480 lines
-		if (emptylines && vga.draw.lines_total<480) {
-			memset(TempLine, 0, sizeof(TempLine));
-			for (int n=0; n<emptylines; n++) RENDER_DrawLine(TempLine);
-		}
-
 		// Find out if less lines drawn than on screen
 		// then fill in missing lines
-		if (vga.draw.lines_done<480) {
+		if (vga.draw.lines_done<vga.draw.lines_total) {
 			memset(TempLine, 0, sizeof(TempLine));
-                        for (int n=0; n<((480-vga.draw.lines_done)/2); n++) RENDER_DrawLine(TempLine);
+                        for (int n=0; n<((vga.draw.lines_total-vga.draw.lines_done)/2); n++) RENDER_DrawLine(TempLine);
 		}
-
+		#ifdef INTERLACE
+		interlace=(interlace==0 ? 1 : 0);
+		#endif
 		RENDER_EndUpdate(false);
 	}
 }
@@ -648,18 +631,8 @@ static void VGA_DrawPart(Bitu lines) {
 	// Calculate number of lines to fill above and below with 0
 	// Reason: drawing occurs in a 480 lines window in a 240 line buffer. The window is 
         // centered and to avoid content be cut off, we'll fill the top and the bottom
-	int emptylines=0;
-	if (1==0 && !lowres) {
-		emptylines = vga.draw.lines_total / 4;
-	}
-
-	// Fill top portion (only in modes with 480 lines or higher)
-	if (vga.draw.lines_done==0 && emptylines && vga.draw.lines_total>=480) {
-		memset(TempLine, 0, sizeof(TempLine));
-		for (int n=0; n<emptylines; n++) RENDER_DrawLine(TempLine);
-	}
 	while (lines--) {
-		int render = (lowres || vga.draw.lines_done % 2);
+		int render = (lowres || (vga.draw.lines_done+interlace) % 2);
 
 		Bit8u * data=VGA_DrawLine( vga.draw.address, vga.draw.address_line );
 		// draw every 2nd line only
@@ -688,17 +661,9 @@ static void VGA_DrawPart(Bitu lines) {
 #ifdef VGA_KEEP_CHANGES
 		VGA_ChangesEnd();
 #endif
-		// Fill lower portion
-		if (emptylines) {
-			memset(TempLine, 0, sizeof(TempLine));
-			for (int n=0; n<emptylines; n++) RENDER_DrawLine(TempLine);
-		}
-		// Add the top portion here if less than 480 lines
-		if (emptylines && vga.draw.lines_total<480) {
-			memset(TempLine, 0, sizeof(TempLine));
-			for (int n=0; n<emptylines; n++) RENDER_DrawLine(TempLine);
-		}
-
+		#ifdef INTERLACE
+		interlace=(interlace==0 ? 1 : 0);
+		#endif
 		RENDER_EndUpdate(false);
 	}
 }

@@ -91,7 +91,7 @@
 #define C_TARGETCPU X86_64
 
 /* Define to 1 to use a unaligned memory access */
-#define C_UNALIGNED_MEMORY 1
+/* #undef C_UNALIGNED_MEMORY */
 
 /* define to 1 if you have XKBlib.h and X11 lib */
 #define C_X11_XKB 1

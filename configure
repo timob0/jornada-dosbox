@@ -6748,7 +6748,7 @@ $as_echo "Motorola 68000" >&6; }
     c_unalignedmemory=yes
     ;;
    *)
-    $as_echo "#define C_TARGETCPU UNKNOWN" >>confdefs.h
+    $as_echo "#define C_TARGETCPU ARMV4LE" >>confdefs.h
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: unknown" >&5
 $as_echo "unknown" >&6; }
@@ -6865,7 +6865,7 @@ $as_echo "no" >&6; }
     fi
   fi
 fi
-
+$as_echo "#define C_DYNREC 1" >>confdefs.h
 
 # Check whether --enable-fpu was given.
 if test "${enable_fpu+set}" = set; then :
@@ -6921,7 +6921,7 @@ fi
 if test "${enable_unaligned_memory+set}" = set; then :
   enableval=$enable_unaligned_memory;
 else
-  enable_unaligned_memory=yes
+  enable_unaligned_memory=no
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable unaligned memory access" >&5
