@@ -1384,6 +1384,7 @@ void VGA_SetupDrawing(Bitu /*val*/) {
 	if (vga.draw.double_scan) {
 		if (IS_VGA_ARCH) { 
 			vga.draw.vblank_skip /= 2;
+			// Jornada half height patch
 			height/=2;
 		}
 		doubleheight=true;
@@ -1396,6 +1397,7 @@ void VGA_SetupDrawing(Bitu /*val*/) {
 		if (!doubleheight && (vga.mode<M_TEXT) && !(vga.draw.address_line_total & 1)) {
 			vga.draw.address_line_total/=2;
 			doubleheight=true;
+			// Jornada half height patch
 			height/=2;
 		}
 	}
@@ -1463,8 +1465,10 @@ void VGA_SetupDrawing(Bitu /*val*/) {
 			doublewidth ? "double":"normal",doubleheight ? "double":"normal",aspect_ratio);
 #endif
 		
-		// 240 lines
-		if (height>=400) height/=2;		
+		// Send Message to Mouse to resize maxiums
+		GFX_SetMouseMaxXY(width,height);
+		// Limi to 240 lines for Jornada
+		if (height>240) height/=2;		
 		RENDER_SetSize(width,height,bpp,(float)fps,aspect_ratio,doublewidth,doubleheight);
 	}
 }

@@ -80,6 +80,7 @@ void MAPPER_UpdateJoysticks(void);
 
 /* Mouse related */
 void GFX_CaptureMouse(void);
+void GFX_SetMouseMaxXY(Bit16u x, Bit16u y);
 extern bool mouselocked; //true if mouse is confined to window
 
 #endif

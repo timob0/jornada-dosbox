@@ -439,7 +439,7 @@ public:
 	bool CheckEvent(SDL_Event * event) {
 		if (event->type!=SDL_KEYDOWN && event->type!=SDL_KEYUP) return false;
 		Bitu key=GetKeyCode(event->key.keysym);
-		LOG_MSG("event type %i is key: %x [keysym: %x scancode: %x]",event->type,key,event->key.keysym.sym,event->key.keysym.scancode);
+		// LOG_MSG("event type %i is key: %x [keysym: %x scancode: %x]",event->type,key,event->key.keysym.sym,event->key.keysym.scancode);
 		assert(Bitu(event->key.keysym.sym)<keys);
 		if (event->type==SDL_KEYDOWN) ActivateBindList(&lists[key],0x7fff,true);
 		else DeactivateBindList(&lists[key],true);

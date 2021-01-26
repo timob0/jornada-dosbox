@@ -206,6 +206,7 @@ struct SDL_Block {
 		bool requestlock;
 		bool locked;
 		Bitu sensitivity;
+		Bit16u max_x, max_y;
 	} mouse;
 	SDL_Rect updateRects[1024];
 	Bitu num_joysticks;
@@ -229,6 +230,10 @@ SDL_Surface* SDL_SetVideoMode_Wrap(int width,int height,int bpp,Bit32u flags){
 	static int i_width = 0;
 	static int i_bpp = 0;
 	static Bit32u i_flags = 0;
+
+	//Unconditional clear of SDL surface on mode change. Reason: chaning to lowres might leave artifacts
+	if (sdl.surface!=NULL) SDL_FillRect(sdl.surface,NULL,SDL_MapRGB(sdl.surface->format,0,0,0));
+
 	if (sdl.surface != NULL && height == i_height && width == i_width && bpp == i_bpp && flags == i_flags) {
 		// I don't see a difference, so disabled for now, as the code isn't finished either
 #if SETMODE_SAVES_CLEAR
@@ -773,6 +778,11 @@ void GFX_CaptureMouse(void) {
         mouselocked=sdl.mouse.locked;
 }
 
+void GFX_SetMouseMaxXY(Bit16u x, Bit16u y) {
+	sdl.mouse.max_x = x;
+	sdl.mouse.max_y = y;
+}
+
 bool mouselocked; //Global variable for mapper
 static void CaptureMouse(bool pressed) {
 	if (!pressed)
@@ -1250,12 +1260,13 @@ void Mouse_AutoLock(bool enable) {
 static void HandleMouseMotion(SDL_MouseMotionEvent * motion) {
 	// Jornada screen patch, divide screen height by 240 lines of the physical screen
 	// since this will translate to the touchscreen
-	float ymul = sdl.draw.height / 240.0;
+	float xmul = (float)sdl.mouse.max_x / (float)sdl.draw.width;
+	float ymul = (float)sdl.mouse.max_y / (float)sdl.draw.height;
 	if (sdl.mouse.locked || !sdl.mouse.autoenable)
 		Mouse_CursorMoved((float)motion->xrel*sdl.mouse.sensitivity/100.0f,
-				  (float)motion->yrel*sdl.mouse.sensitivity*ymul/100.0f,
-				  (float)(motion->x-sdl.clip.x)/(sdl.clip.w-1)*sdl.mouse.sensitivity/100.0f,
-				  (float)(motion->y-sdl.clip.y)/(sdl.clip.h-1)*sdl.mouse.sensitivity/100.0f,
+				  (float)motion->yrel*sdl.mouse.sensitivity/100.0f,
+				  (float)(motion->x*xmul-sdl.clip.x)/(sdl.clip.w-1)*sdl.mouse.sensitivity/100.0f,
+				  (float)(motion->y*ymul-sdl.clip.y)/(sdl.clip.h-1)*sdl.mouse.sensitivity/100.0f,
 				  sdl.mouse.locked);
 }
 
