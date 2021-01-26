@@ -308,59 +308,36 @@ static Bit8u scancode_map[MAX_SDLKEYS];
 
 #define Z SDLK_UNKNOWN
 
-/*
-From HP Jornada 7xx Hardware:
-Here's the list of the key down scan key codes:
-
-0x01    Escape 0x02    Quick Launch 1 0x03    Quick Launch 2
-0x04    Quick Launch 3 0x05    Quick Launch 4 0x06    Quick Launch 5
-0x07    Quick Launch 6 0x08    Quick Launch 7 0x09    Quick Launch 8
-0x0A    Quick Launch 9 0x0B    Quick Launch 10 0x0C    Quick Launch 11
-0x0D    Volume down button 0x0E    Volume up button 0x0F    Play button
-
-0x11    '1' 0x12    '2' 0x13    '3' 0x14    '4'
-0x15    '5' 0x16    '6' 0x17    '7' 0x18    '8'
-0x19    '9' 0x1A    '0' 0x1B    '-' 0x1C    '='
-
-0x21    'q' 0x22    'w' 0x23    'e' 0x24    'r'
-0x25    't' 0x26    'y' 0x27    'u' 0x28    'i'
-0x29    'o' 0x2A    'p' 0x2B    '\' 0x2C    backspace
-
-0x31    'a' 0x32    's' 0x33    'd' 0x34    'f'
-0x35    'g' 0x36    'h' 0x37    'j' 0x38    'k'
-0x39    'l' 0x3A    ';'
-
-0x41    'z' 0x42    'x' 0x43    'c' 0x44    'v'
-0x45    'b' 0x46    'n' 0x47    'm' 0x48    ','
-0x49    '.' 0x4B    ''' 0x4C    Carriage return
-
-0x51    Tab 0x53    Left Shift
-0x5A    Up 0x5C    Right Shift
-
-0x65    Alt 0x66    Fn 0x69    Left 0x6A    Down
-0x6B    Right
-
-0x71    Win key 0x72    Control 0x74    Space
-0x78    '/' 0x79    Delete 0x7F    On/Off
-*/
 #ifdef HP_JORNADA_KEYS
-#define MAX_SCANCODES 128
-static SDLKey sdlkey_map[MAX_SCANCODES]={
-	Z,SDLK_ESCAPE,SDLK_F1,SDLK_F2,SDLK_F3,SDLK_F4,SDLK_F5,SDLK_F6,SDLK_F7,SDLK_F8,SDLK_F9,SDLK_F10,     SDLK_F11, Z,Z,Z, //SDLK_VOLUMEDOWN,SDLK_VOLUMEUP,SDLK_AUDIOPLAY,
-	//0x10
-	Z,SDLK_1,     SDLK_2, SDLK_3, SDLK_4, SDLK_5, SDLK_6, SDLK_7, SDLK_8, SDLK_9, SDLK_0, SDLK_MINUS,   SDLK_EQUALS,    Z,Z,Z,
-	//0x20
-	Z,SDLK_q,     SDLK_w, SDLK_e, SDLK_r, SDLK_t, SDLK_y, SDLK_u, SDLK_i, SDLK_o, SDLK_p,SDLK_BACKSLASH,SDLK_BACKSPACE, Z,Z,Z,
-	//0x30
-	Z,SDLK_a,     SDLK_s, SDLK_d, SDLK_f, SDLK_g, SDLK_h, SDLK_j, SDLK_k, SDLK_l, SDLK_SEMICOLON, Z,Z,Z,Z,Z,
-	//0x40
-	Z,SDLK_z,     SDLK_x, SDLK_c, SDLK_v, SDLK_b, SDLK_n, SDLK_m, SDLK_COMMA, SDLK_PERIOD, Z, SDLK_QUOTE, SDLK_RETURN, Z,Z,Z,
-	//0x50
-	Z,SDLK_TAB,   Z, SDLK_LSHIFT, Z,Z,Z,Z,Z,Z, SDLK_UP,Z,SDLK_RSHIFT, Z,Z,Z,
-	//0x60
-	Z,Z,Z,Z,Z, SDLK_LALT,SDLK_RALT,Z,Z,SDLK_LEFT,SDLK_DOWN,SDLK_RIGHT, Z,Z,Z,Z,
-	//0x70
-	Z, Z, SDLK_LCTRL, Z, SDLK_SPACE,	Z,Z,Z, SDLK_SLASH, SDLK_DELETE, Z,Z,Z,Z,Z,SDLK_POWER
+
+// ATTENTION: What is being referred to as scancodes is in reality KEYCODES!
+#define MAX_SCANCODES 246
+static SDLKey sdlkey_map[MAX_SCANCODES]={Z,
+	SDLK_ESCAPE, SDLK_1, SDLK_2, SDLK_3, SDLK_4, SDLK_5, SDLK_6, SDLK_7, SDLK_8, SDLK_9, //9
+	SDLK_0, SDLK_MINUS, SDLK_EQUALS, SDLK_BACKSPACE, SDLK_TAB, SDLK_q, SDLK_w, SDLK_e, SDLK_r, //19
+	SDLK_t, SDLK_y, SDLK_u, SDLK_i, SDLK_o, SDLK_p, SDLK_BACKSLASH,SDLK_HASH,SDLK_RETURN, SDLK_LCTRL, //29
+	SDLK_a, SDLK_s, SDLK_d, SDLK_f, SDLK_g, SDLK_h, SDLK_j, SDLK_k, SDLK_l, SDLK_SEMICOLON, //39
+	SDLK_QUOTE, SDLK_RALT, SDLK_LSHIFT, SDLK_PLUS, SDLK_z, SDLK_x, SDLK_c, SDLK_v, SDLK_b, SDLK_n, // 49
+	SDLK_m, SDLK_COMMA, SDLK_PERIOD, SDLK_SLASH, SDLK_RSHIFT, Z, SDLK_LALT, SDLK_SPACE, Z, SDLK_F1, //59
+	SDLK_F2,SDLK_F3,SDLK_F4,SDLK_F5,SDLK_F6,SDLK_F7,SDLK_F8,SDLK_F9,SDLK_F10, Z, //69
+	Z, Z, Z, Z, SDLK_MINUS, Z, Z, Z, Z, Z, // 79
+	Z, Z, Z, Z, Z, Z, Z, SDLK_F11, Z, Z, //89
+	Z, Z, Z, Z, Z, Z, Z, Z,        Z, Z, //99
+	Z, Z, Z, SDLK_UP, Z, SDLK_LEFT, SDLK_RIGHT, Z, SDLK_DOWN, Z, //109
+	Z, SDLK_DELETE, Z, Z, Z, Z, Z, Z, Z, Z, //119
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //129
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //139
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //149
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //159
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //169
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //179
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //189
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //199
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //209
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //219
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //229
+	Z, Z, Z, Z, Z, Z, Z, Z, Z, Z, //239
+	Z, Z, Z, Z, Z, SDLK_POWER     //245
 };
 #else
 #define MAX_SCANCODES 212
@@ -462,7 +439,7 @@ public:
 	bool CheckEvent(SDL_Event * event) {
 		if (event->type!=SDL_KEYDOWN && event->type!=SDL_KEYUP) return false;
 		Bitu key=GetKeyCode(event->key.keysym);
-		LOG_MSG("key type %i is %x [%x %x]",event->type,key,event->key.keysym.sym,event->key.keysym.scancode);
+		LOG_MSG("event type %i is key: %x [keysym: %x scancode: %x]",event->type,key,event->key.keysym.sym,event->key.keysym.scancode);
 		assert(Bitu(event->key.keysym.sym)<keys);
 		if (event->type==SDL_KEYDOWN) ActivateBindList(&lists[key],0x7fff,true);
 		else DeactivateBindList(&lists[key],true);
@@ -2365,7 +2342,7 @@ void MAPPER_StartUp(Section * sec) {
 
 	if (section->Get_bool("usescancodes")) {
 		usescancodes=true;
-
+		#ifndef HP_JORNADA_KEYS
 		/* Note: table has to be tested/updated for various OSs */
 		bool evdev_input = false;
 		if (evdev_input) {
@@ -2403,6 +2380,7 @@ void MAPPER_StartUp(Section * sec) {
 			sdlkey_map[0x67]=SDLK_PRINT;
 			sdlkey_map[0x69]=SDLK_RALT;
 		}
+		#endif
 
 		Bitu i;
 		for (i=0; i<MAX_SDLKEYS; i++) scancode_map[i]=0;
