@@ -1321,14 +1321,10 @@ void GFX_LosingFocus(void) {
 void GFX_Events() {
 	//Don't poll too often. This can be heavy on the OS, especially Macs.
 	//In idle mode 3000-4000 polls are done per second without this check.
-	//Macs, with this code,  max 250 polls per second. (non-macs unused default max 500)
-	//Currently not implemented for all platforms, given the ALT-TAB stuff for WIN32.
-#if defined (MACOSX)
 	static int last_check = 0;
 	int current_check = GetTicks();
 	if (current_check - last_check <=  DB_POLLSKIP) return;
 	last_check = current_check;
-#endif
 
 	SDL_Event event;
 #if defined (REDUCE_JOYSTICK_POLLING)
@@ -1340,6 +1336,7 @@ void GFX_Events() {
 		MAPPER_UpdateJoysticks();
 	}
 #endif
+
 	while (SDL_PollEvent(&event)) {
 #if SDL_XORG_FIX
 		// Special code for broken SDL with Xorg 1.20.1, where pairs of inputfocus gain and loss events are generated
@@ -1435,51 +1432,12 @@ void GFX_Events() {
 		case SDL_VIDEOEXPOSE:
 			if (sdl.draw.callback) sdl.draw.callback( GFX_CallBackRedraw );
 			break;
-#ifdef WIN32
-		case SDL_KEYDOWN:
-		case SDL_KEYUP:
-			// ignore event alt+tab
-			if (event.key.keysym.sym==SDLK_LALT) sdl.laltstate = event.key.type;
-			if (event.key.keysym.sym==SDLK_RALT) sdl.raltstate = event.key.type;
-			if (((event.key.keysym.sym==SDLK_TAB)) &&
-				((sdl.laltstate==SDL_KEYDOWN) || (sdl.raltstate==SDL_KEYDOWN))) break;
-			// This can happen as well.
-			if (((event.key.keysym.sym == SDLK_TAB )) && (event.key.keysym.mod & KMOD_ALT)) break;
-			// ignore tab events that arrive just after regaining focus. (likely the result of alt-tab)
-			if ((event.key.keysym.sym == SDLK_TAB) && (GetTicks() - sdl.focus_ticks < 2)) break;
-#endif
-#if defined (MACOSX)			
-		case SDL_KEYDOWN:
-		case SDL_KEYUP:
-			/* On macs CMD-Q is the default key to close an application */
-			if (event.key.keysym.sym == SDLK_q && (event.key.keysym.mod == KMOD_RMETA || event.key.keysym.mod == KMOD_LMETA) ) {
-				KillSwitch(true);
-				break;
-			} 
-#endif
 		default:
 			void MAPPER_CheckEvent(SDL_Event * event);
 			MAPPER_CheckEvent(&event);
 		}
 	}
 }
-
-#if defined (WIN32)
-static BOOL WINAPI ConsoleEventHandler(DWORD event) {
-	switch (event) {
-	case CTRL_SHUTDOWN_EVENT:
-	case CTRL_LOGOFF_EVENT:
-	case CTRL_CLOSE_EVENT:
-	case CTRL_BREAK_EVENT:
-		raise(SIGTERM);
-		return TRUE;
-	case CTRL_C_EVENT:
-	default: //pass to the next handler
-		return FALSE;
-	}
-}
-#endif
-
 
 /* static variable to show wether there is not a valid stdout.
  * Fixes some bugs when -noconsole is used in a read only directory */
