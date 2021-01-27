@@ -33,6 +33,7 @@
 #include "int10.h"
 #include "bios.h"
 #include "dos_inc.h"
+#include "video.h"
 
 static Bitu call_int33,call_int74,int74_ret_callback,call_mouse_bd;
 static Bit16u ps2cbseg,ps2cbofs;
@@ -654,7 +655,7 @@ void Mouse_NewVideoMode(void) {
 	oldmouseX = static_cast<Bit16s>(mouse.x);
 	oldmouseY = static_cast<Bit16s>(mouse.y);
 
-
+	GFX_SetMouseMaxXY(mouse.max_x,mouse.max_y);
 }
 
 //Much too empty, Mouse_NewVideoMode contains stuff that should be in here

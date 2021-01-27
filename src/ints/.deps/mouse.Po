@@ -172,7 +172,8 @@ mouse.o: mouse.cpp /usr/include/stdc-predef.h /usr/include/string.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_posix.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_core.h \
  /usr/include/x86_64-linux-gnu/bits/unistd.h \
- /usr/include/x86_64-linux-gnu/bits/unistd_ext.h ../../include/support.h
+ /usr/include/x86_64-linux-gnu/bits/unistd_ext.h ../../include/support.h \
+ ../../include/video.h
 
 /usr/include/stdc-predef.h:
 
@@ -623,3 +624,5 @@ int10.h:
 /usr/include/x86_64-linux-gnu/bits/unistd_ext.h:
 
 ../../include/support.h:
+
+../../include/video.h:

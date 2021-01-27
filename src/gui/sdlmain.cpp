@@ -225,14 +225,16 @@ static SDL_Block sdl;
 #define SETMODE_SAVES 1  //Don't set Video Mode if nothing changes.
 #define SETMODE_SAVES_CLEAR 1 //Clear the screen, when the Video Mode is reused
 SDL_Surface* SDL_SetVideoMode_Wrap(int width,int height,int bpp,Bit32u flags){
+	//Unconditional clear of SDL surface on mode change. Reason: chaning to lowres might leave artifacts
+	LOG_MSG("Clear screen");
+	if (sdl.surface!=NULL) SDL_FillRect(sdl.surface,NULL,SDL_MapRGB(sdl.surface->format,0,0,0));
+
 #if SETMODE_SAVES
 	static int i_height = 0;
 	static int i_width = 0;
 	static int i_bpp = 0;
 	static Bit32u i_flags = 0;
 
-	//Unconditional clear of SDL surface on mode change. Reason: chaning to lowres might leave artifacts
-	if (sdl.surface!=NULL) SDL_FillRect(sdl.surface,NULL,SDL_MapRGB(sdl.surface->format,0,0,0));
 
 	if (sdl.surface != NULL && height == i_height && width == i_width && bpp == i_bpp && flags == i_flags) {
 		// I don't see a difference, so disabled for now, as the code isn't finished either
@@ -524,6 +526,10 @@ Bitu GFX_SetSize(Bitu width,Bitu height,Bitu flags,double scalex,double scaley,G
 		SDL_FreeSurface(sdl.blit.surface);
 		sdl.blit.surface=0;
 	}
+
+	// Clear screen
+	if(sdl.surface) SDL_FillRect(sdl.surface,NULL,SDL_MapRGB(sdl.surface->format,0,0,0));
+
 	switch (sdl.desktop.want_type) {
 	case SCREEN_SURFACE:
 dosurface:
@@ -553,24 +559,6 @@ dosurface:
 		} else {
 			sdl.clip.x=0;sdl.clip.y=0;
 			sdl.surface=SDL_SetVideoMode_Wrap(width,height,bpp,(flags & GFX_CAN_RANDOM) ? SDL_SWSURFACE : SDL_HWSURFACE);
-#ifdef WIN32
-			if (sdl.surface == NULL) {
-				SDL_QuitSubSystem(SDL_INIT_VIDEO);
-				if (!sdl.using_windib) {
-					LOG_MSG("Failed to create hardware surface.\nRestarting video subsystem with windib enabled.");
-					putenv("SDL_VIDEODRIVER=windib");
-					sdl.using_windib=true;
-				} else {
-					LOG_MSG("Failed to create hardware surface.\nRestarting video subsystem with directx enabled.");
-					putenv("SDL_VIDEODRIVER=directx");
-					sdl.using_windib=false;
-				}
-				SDL_InitSubSystem(SDL_INIT_VIDEO);
-				GFX_SetIcon(); //Set Icon again
-				sdl.surface = SDL_SetVideoMode_Wrap(width,height,bpp,SDL_HWSURFACE);
-				if(sdl.surface) GFX_SetTitle(-1,-1,false); //refresh title.
-			}
-#endif
 			if (sdl.surface == NULL)
 				E_Exit("Could not set windowed video mode %ix%i-%i: %s",width,height,bpp,SDL_GetError());
 		}
@@ -780,7 +768,8 @@ void GFX_CaptureMouse(void) {
 
 void GFX_SetMouseMaxXY(Bit16u x, Bit16u y) {
 	sdl.mouse.max_x = x;
-	sdl.mouse.max_y = y;
+	sdl.mouse.max_y = y;	
+	LOG_MSG("Mouse max_x %d, max_y %d, screen_x %d, screen_y %d",sdl.mouse.max_x,sdl.mouse.max_y, sdl.draw.width, sdl.draw.height);
 }
 
 bool mouselocked; //Global variable for mapper
@@ -1262,11 +1251,13 @@ static void HandleMouseMotion(SDL_MouseMotionEvent * motion) {
 	// since this will translate to the touchscreen
 	float xmul = (float)sdl.mouse.max_x / (float)sdl.draw.width;
 	float ymul = (float)sdl.mouse.max_y / (float)sdl.draw.height;
+	LOG_MSG("xmul %f, ymul %f",xmul, ymul);
+
 	if (sdl.mouse.locked || !sdl.mouse.autoenable)
-		Mouse_CursorMoved((float)motion->xrel*sdl.mouse.sensitivity/100.0f,
-				  (float)motion->yrel*sdl.mouse.sensitivity/100.0f,
-				  (float)(motion->x*xmul-sdl.clip.x)/(sdl.clip.w-1)*sdl.mouse.sensitivity/100.0f,
-				  (float)(motion->y*ymul-sdl.clip.y)/(sdl.clip.h-1)*sdl.mouse.sensitivity/100.0f,
+		Mouse_CursorMoved((float)motion->xrel*sdl.mouse.sensitivity/100.0f*xmul,
+				  (float)motion->yrel*sdl.mouse.sensitivity/100.0f*ymul,
+				  (float)(motion->x-sdl.clip.x)/(sdl.clip.w-1)*sdl.mouse.sensitivity/100.0f*xmul,
+				  (float)(motion->y-sdl.clip.y)/(sdl.clip.h-1)*sdl.mouse.sensitivity/100.0f*ymul,
 				  sdl.mouse.locked);
 }
 
