@@ -6,7 +6,8 @@ dosbox 0.74-3 fork with patches to be useful on Jornada 7xx running Linux:
 ## Dependencies
 - automake
 - autotools-dev
-- libsdl1.2debian libsdl1.2-dev
+- libsdl1.2debian 
+- libsdl1.2-dev
 
 ## building
 I'd suggest to use the desktop PC and QEMU running on the CF card, running this on the Jornada should also be possible but might take some serious time.
@@ -16,3 +17,4 @@ I'd suggest to use the desktop PC and QEMU running on the CF card, running this 
 - cd /opt/jornada-dosbox
 - ./configure
 - ./make
+- ./make install
