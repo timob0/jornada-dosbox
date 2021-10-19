@@ -14,6 +14,8 @@ apt-get install the below packages to your Jornada Linux CF card:
 - build-essential
 - manpages-dev
 - libevdev-dev
+
+`apt-get install automake autotools-dev libsdl1.2debian libsdl1.2-dev build-essential manpages-dev libevdev-dev`
  
 ## Building
 I'd suggest to use the desktop PC and QEMU running on the CF card, running this on the Jornada should also be possible but might take some serious time.
@@ -26,8 +28,8 @@ I'd suggest to use the desktop PC and QEMU running on the CF card, running this 
   - specifically, these two #defines are needed (add them manually if you wish):
   - `#define C_TARGETCPU ARMV4LE`
   - `#define C_DYNREC 1`
-- ./make
-- ./make install
+- `./make`
+- `./make install`
 
 ## Running
 `dosbox` from the commandline. If you see a garbled screen, thats because of permissions to the framebuffer device. Try to run as root then.
