@@ -270,6 +270,14 @@ case "$host_cpu" in
     c_targetcpu="m68k"
     c_unalignedmemory=yes
     ;;
+   arm*)
+    CFLAGS="$CFLAGS -mcpu=strongarm1110"
+    CXXFLAGS="$CXXFLAGS -mcpu=strongarm1110"
+    AC_DEFINE(C_TARGETCPU,ARMV4LE)
+    AC_MSG_RESULT(ARMv4)
+    c_targetcpu="armv4"
+    c_unalignedmemory=no
+    ;;
    *)
     AC_DEFINE(C_TARGETCPU,UNKNOWN)
     AC_MSG_RESULT(unknown)
@@ -338,12 +346,8 @@ dnl x86 only enable it if dynamic-x86 is disabled.
         AC_MSG_RESULT([no, using dynamic-x86])
     fi
   else 
-    if test x$c_targetcpu = xx86_64 ; then
-        AC_DEFINE(C_DYNREC,1)
-        AC_MSG_RESULT(yes)
-    else      
-      AC_MSG_RESULT(no)
-    fi
+    AC_DEFINE(C_DYNREC,1)
+    AC_MSG_RESULT(yes)
   fi
 fi
 
