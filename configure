@@ -6750,8 +6750,8 @@ $as_echo "Motorola 68000" >&6; }
    *)
     $as_echo "#define C_TARGETCPU ARMV4LE" >>confdefs.h
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: unknown" >&5
-$as_echo "unknown" >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: ARMv4" >&5
+$as_echo "ARMv4" >&6; }
     c_unalignedmemory=no
     ;;
 esac
@@ -6860,12 +6860,13 @@ $as_echo "no, using dynamic-x86" >&6; }
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
     else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+        $as_echo "#define C_DYNREC 1" >>confdefs.h
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
     fi
   fi
 fi
-$as_echo "#define C_DYNREC 1" >>confdefs.h
+
 
 # Check whether --enable-fpu was given.
 if test "${enable_fpu+set}" = set; then :
@@ -6921,7 +6922,7 @@ fi
 if test "${enable_unaligned_memory+set}" = set; then :
   enableval=$enable_unaligned_memory;
 else
-  enable_unaligned_memory=no
+  enable_unaligned_memory=yes
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable unaligned memory access" >&5
