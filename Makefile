@@ -216,12 +216,12 @@ AUTOMAKE = ${SHELL} /home/timo/jornada-dosbox/missing automake-1.15
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -O2
+CFLAGS = -g -O2 -mcpu=strongarm1110
 CPP = gcc -E
 CPPFLAGS =  -I/usr/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT
 CXX = g++
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2 -mno-ms-bitfields 
+CXXFLAGS = -g -O2 -mno-ms-bitfields -mcpu=strongarm1110
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
