@@ -47,6 +47,5 @@ If you have a DOS folder on the FAT partition of your CF card for use with Pocke
 ## Limitations
 - Only every 2nd scanline is being rendered to scale down standard VGA to the Jornada screen
 - Emulation is not exactly quick, maybe at PC-XT level
-- Sound not working (due to no sound support in the Linux kernel for Jornada)
 - Touchscreen -> Mouse translation is ... not good
 - dosbox relies on its own keyboard mapping, the console keyboard map is ignored
