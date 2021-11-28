@@ -3,6 +3,7 @@ dosbox 0.74-3 fork with patches to be useful on Jornada 7xx running Linux:
 - VGA code changed to output every 2nd scanline only in VGA mode to support half VGA screen
 - VGA ROM font changed to look acceptable on half VGA screen
 - Works on the commandline framebuffer device, doesn't require X11 overhead. Should work with X11 also though.
+- Supports sound on the Jornada by using the snd-jornada720 driver from the kernelpatches repo.
 
 ## Dependencies
 apt-get install the below packages to your Jornada Linux CF card:
@@ -14,6 +15,7 @@ apt-get install the below packages to your Jornada Linux CF card:
 - build-essential
 - manpages-dev
 - libevdev-dev
+- libsdl-mixer(-dev) for ALSA sound support
 
 `apt-get install automake autotools-dev libsdl1.2debian libsdl1.2-dev build-essential manpages-dev libevdev-dev`
  
@@ -38,7 +40,7 @@ Some settings you would want to adjust:
 - `core=auto`
 - `cputype=auto`
 - `cycles=max`
-- Disable all audio emulation. The Jornada does not support audio under Linux yet.
+- Set the audio emulation to your liking, suggest to go with 22kHz or maybe even 11kHz sind it's quite heavy on the CPU. Be sure to use the snd-jornada720 from my kernelpatches repo and configure ALSA properly.
 
 If you have a DOS folder on the FAT partition of your CF card for use with PocketDOS you can just mount it fine and use the programs from Linux. Add a mount C: /mnt/boot/YOURDOSFOLDER to the autoexec section of the config file
 
