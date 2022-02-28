@@ -28,10 +28,6 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#ifdef WIN32
-#include <signal.h>
-#include <process.h>
-#endif
 
 #include "cross.h"
 #include "SDL.h"
@@ -52,7 +48,9 @@
 #include "control.h"
 
 #define MAPPERFILE "mapper-" VERSION ".map"
-//#define DISABLE_JOYSTICK
+#define DISABLE_JOYSTICK
+
+#undef J720_DBG 
 
 #if C_OPENGL
 #include "SDL_opengl.h"
@@ -95,27 +93,7 @@ PFNGLUNMAPBUFFERARBPROC glUnmapBufferARB = NULL;
 extern char** environ;
 #endif
 
-#ifdef WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#if (HAVE_DDRAW_H)
-#include <ddraw.h>
-struct private_hwdata {
-	LPDIRECTDRAWSURFACE3 dd_surface;
-	LPDIRECTDRAWSURFACE3 dd_writebuf;
-};
-#endif
-
-#define STDOUT_FILE	TEXT("stdout.txt")
-#define STDERR_FILE	TEXT("stderr.txt")
-#define DEFAULT_CONFIG_FILE "/dosbox.conf"
-#elif defined(MACOSX)
-#define DEFAULT_CONFIG_FILE "/Library/Preferences/DOSBox Preferences"
-#else /*linux freebsd*/
 #define DEFAULT_CONFIG_FILE "/.dosboxrc"
-#endif
 
 #if C_SET_PRIORITY
 #include <sys/resource.h>
@@ -188,9 +166,6 @@ struct SDL_Block {
 #endif
 	struct {
 		SDL_Surface * surface;
-#if (HAVE_DDRAW_H) && defined(WIN32)
-		RECT rect;
-#endif
 	} blit;
 	struct {
 		PRIORITY_LEVELS focus;
@@ -210,11 +185,6 @@ struct SDL_Block {
 	} mouse;
 	SDL_Rect updateRects[1024];
 	Bitu num_joysticks;
-#if defined (WIN32)
-	bool using_windib;
-	// Time when sdl regains focus (alt-tab) in windowed mode
-	Bit32u focus_ticks;
-#endif
 	// state of alt-keys for certain special handlings
 	Bit8u laltstate;
 	Bit8u raltstate;
@@ -226,7 +196,9 @@ static SDL_Block sdl;
 #define SETMODE_SAVES_CLEAR 1 //Clear the screen, when the Video Mode is reused
 SDL_Surface* SDL_SetVideoMode_Wrap(int width,int height,int bpp,Bit32u flags){
 	//Unconditional clear of SDL surface on mode change. Reason: chaning to lowres might leave artifacts
-	LOG_MSG("Clear screen");
+	#ifdef J720_DBG
+	LOG_MSG("sdlmain: Clear screen");
+	#endif
 	if (sdl.surface!=NULL) SDL_FillRect(sdl.surface,NULL,SDL_MapRGB(sdl.surface->format,0,0,0));
 
 #if SETMODE_SAVES
@@ -255,24 +227,6 @@ SDL_Surface* SDL_SetVideoMode_Wrap(int width,int height,int bpp,Bit32u flags){
 		return sdl.surface;
 	}
 
-
-#ifdef WIN32
-	//SDL seems to crash if we are in OpenGL mode currently and change to exactly the same size without OpenGL.
-	//This happens when DOSBox is in textmode with aspect=true and output=opengl and the mapper is started.
-	//The easiest solution is to change the size. The mapper doesn't care. (PART PXX)
-
-	//Also we have to switch back to windowed mode first, as else it may crash as well.
-	//Bug: we end up with a locked mouse cursor, but at least that beats crashing. (output=opengl,aspect=true,fullscreen=true)
-	if((i_flags&SDL_OPENGL) && !(flags&SDL_OPENGL) && (i_flags&SDL_FULLSCREEN) && !(flags&SDL_FULLSCREEN)){
-		GFX_SwitchFullScreen();
-		return SDL_SetVideoMode_Wrap(width,height,bpp,flags);
-	}
-
-	//PXX
-	if ((i_flags&SDL_OPENGL) && !(flags&SDL_OPENGL) && height==i_height && width==i_width && height==480) {
-		height++;
-	}
-#endif //WIN32
 #endif //SETMODE_SAVES
 	// 240 lines
 	height = height > 240 ? height=240 : height;
@@ -316,7 +270,6 @@ static void GFX_SetIcon() {
 #if !defined(MACOSX)
 	/* Set Icon (must be done before any sdl_setvideomode call) */
 	/* But don't set it on OS X, as we use a nicer external icon there. */
-	/* Made into a separate call, so it can be called again when we restart the graphics output on win32 */
 #ifdef WORDS_BIGENDIAN
 	SDL_Surface* logos= SDL_CreateRGBSurfaceFrom((void*)logo,32,32,32,128,0xff000000,0x00ff0000,0x0000ff00,0);
 #else
@@ -369,12 +322,6 @@ static void PauseDOSBox(bool pressed) {
 	}
 }
 
-#if defined (WIN32)
-bool GFX_SDLUsingWinDIB(void) {
-	return sdl.using_windib;
-}
-#endif
-
 /* Reset the screen with current values in the sdl structure */
 Bitu GFX_GetBestMode(Bitu flags) {
 	Bitu testbpp,gotbpp;
@@ -388,9 +335,6 @@ check_surface:
 		else if (flags & GFX_LOVE_16) testbpp=16;
 		else if (flags & GFX_LOVE_32) testbpp=32;
 		else testbpp=0;
-#if (HAVE_DDRAW_H) && defined(WIN32)
-check_gotbpp:
-#endif
 		// TB changed to 240 lines
 		if (sdl.desktop.fullscreen) gotbpp=SDL_VideoModeOK(640,240,testbpp,SDL_FULLSCREEN|SDL_HWSURFACE|SDL_HWPALETTE);
 		else gotbpp=sdl.desktop.bpp;
@@ -412,16 +356,6 @@ check_gotbpp:
 		}
 		flags |= GFX_CAN_RANDOM;
 		break;
-#if (HAVE_DDRAW_H) && defined(WIN32)
-	case SCREEN_SURFACE_DDRAW:
-		if (!(flags&(GFX_CAN_15|GFX_CAN_16|GFX_CAN_32))) goto check_surface;
-		if (flags & GFX_LOVE_15) testbpp=15;
-		else if (flags & GFX_LOVE_16) testbpp=16;
-		else if (flags & GFX_LOVE_32) testbpp=32;
-		else testbpp=0;
-		flags|=GFX_SCALING;
-		goto check_gotbpp;
-#endif
 	case SCREEN_OVERLAY:
 		//We only accept 32bit output from the scalers here
 		//Can't handle true color inputs
@@ -591,44 +525,6 @@ dosurface:
 			}
 		}
 		break;
-#if (HAVE_DDRAW_H) && defined(WIN32)
-	case SCREEN_SURFACE_DDRAW:
-		if (flags & GFX_CAN_15) bpp=15;
-		if (flags & GFX_CAN_16) bpp=16;
-		if (flags & GFX_CAN_32) bpp=32;
-		if (!GFX_SetupSurfaceScaled((sdl.desktop.doublebuf && sdl.desktop.fullscreen) ? SDL_DOUBLEBUF : 0,bpp)) goto dosurface;
-		sdl.blit.rect.top=sdl.clip.y;
-		sdl.blit.rect.left=sdl.clip.x;
-		sdl.blit.rect.right=sdl.clip.x+sdl.clip.w;
-		sdl.blit.rect.bottom=sdl.clip.y+sdl.clip.h;
-		sdl.blit.surface=SDL_CreateRGBSurface(SDL_HWSURFACE,sdl.draw.width,sdl.draw.height,
-				sdl.surface->format->BitsPerPixel,
-				sdl.surface->format->Rmask,
-				sdl.surface->format->Gmask,
-				sdl.surface->format->Bmask,
-				0);
-		if (!sdl.blit.surface || (!sdl.blit.surface->flags&SDL_HWSURFACE)) {
-			if (sdl.blit.surface) {
-				SDL_FreeSurface(sdl.blit.surface);
-				sdl.blit.surface=0;
-			}
-			LOG_MSG("Failed to create ddraw surface, back to normal surface.");
-			goto dosurface;
-		}
-		switch (sdl.surface->format->BitsPerPixel) {
-		case 15:
-			retFlags = GFX_CAN_15 | GFX_SCALING | GFX_HARDWARE;
-			break;
-		case 16:
-			retFlags = GFX_CAN_16 | GFX_SCALING | GFX_HARDWARE;
-               break;
-		case 32:
-			retFlags = GFX_CAN_32 | GFX_SCALING | GFX_HARDWARE;
-               break;
-		}
-		sdl.desktop.type=SCREEN_SURFACE_DDRAW;
-		break;
-#endif
 	case SCREEN_OVERLAY:
 		if (sdl.overlay) {
 			SDL_FreeYUVOverlay(sdl.overlay);
@@ -769,7 +665,9 @@ void GFX_CaptureMouse(void) {
 void GFX_SetMouseMaxXY(Bit16u x, Bit16u y) {
 	sdl.mouse.max_x = x;
 	sdl.mouse.max_y = y;	
-	LOG_MSG("Mouse max_x %d, max_y %d, screen_x %d, screen_y %d",sdl.mouse.max_x,sdl.mouse.max_y, sdl.draw.width, sdl.draw.height);
+	#ifdef J720_DBG
+	LOG_MSG("sdlmain: Mouse max_x %d, max_y %d, screen_x %d, screen_y %d",sdl.mouse.max_x,sdl.mouse.max_y, sdl.draw.width, sdl.draw.height);
+	#endif
 }
 
 bool mouselocked; //Global variable for mapper
@@ -816,17 +714,6 @@ bool GFX_StartUpdate(Bit8u * & pixels,Bitu & pitch) {
 		}
 		sdl.updating=true;
 		return true;
-#if (HAVE_DDRAW_H) && defined(WIN32)
-	case SCREEN_SURFACE_DDRAW:
-		if (SDL_LockSurface(sdl.blit.surface)) {
-//			LOG_MSG("SDL Lock failed");
-			return false;
-		}
-		pixels=(Bit8u *)sdl.blit.surface->pixels;
-		pitch=sdl.blit.surface->pitch;
-		sdl.updating=true;
-		return true;
-#endif
 	case SCREEN_OVERLAY:
 		if (SDL_LockYUVOverlay(sdl.overlay)) return false;
 		pixels=(Bit8u *)*(sdl.overlay->pixels);
@@ -852,9 +739,6 @@ bool GFX_StartUpdate(Bit8u * & pixels,Bitu & pitch) {
 
 
 void GFX_EndUpdate( const Bit16u *changedLines ) {
-#if (HAVE_DDRAW_H) && defined(WIN32)
-	int ret;
-#endif
 	if (!sdl.updating)
 		return;
 	sdl.updating=false;
@@ -893,26 +777,6 @@ void GFX_EndUpdate( const Bit16u *changedLines ) {
 				SDL_UpdateRects( sdl.surface, rectCount, sdl.updateRects );
 		}
 		break;
-#if (HAVE_DDRAW_H) && defined(WIN32)
-	case SCREEN_SURFACE_DDRAW:
-		SDL_UnlockSurface(sdl.blit.surface);
-		ret=IDirectDrawSurface3_Blt(
-			sdl.surface->hwdata->dd_writebuf,&sdl.blit.rect,
-			sdl.blit.surface->hwdata->dd_surface,0,
-			DDBLT_WAIT, NULL);
-		switch (ret) {
-		case DD_OK:
-			break;
-		case DDERR_SURFACELOST:
-			IDirectDrawSurface3_Restore(sdl.blit.surface->hwdata->dd_surface);
-			IDirectDrawSurface3_Restore(sdl.surface->hwdata->dd_surface);
-			break;
-		default:
-			LOG_MSG("DDRAW:Failed to blit, error %X",ret);
-		}
-		SDL_Flip(sdl.surface);
-		break;
-#endif
 	case SCREEN_OVERLAY:
 		SDL_UnlockYUVOverlay(sdl.overlay);
 		SDL_DisplayYUVOverlay(sdl.overlay,&sdl.clip);
@@ -1025,24 +889,7 @@ static void SetPriority(PRIORITY_LEVELS level) {
 
 #endif
 	switch (level) {
-#ifdef WIN32
-	case PRIORITY_LEVEL_PAUSE:	// if DOSBox is paused, assume idle priority
-	case PRIORITY_LEVEL_LOWEST:
-		SetPriorityClass(GetCurrentProcess(),IDLE_PRIORITY_CLASS);
-		break;
-	case PRIORITY_LEVEL_LOWER:
-		SetPriorityClass(GetCurrentProcess(),BELOW_NORMAL_PRIORITY_CLASS);
-		break;
-	case PRIORITY_LEVEL_NORMAL:
-		SetPriorityClass(GetCurrentProcess(),NORMAL_PRIORITY_CLASS);
-		break;
-	case PRIORITY_LEVEL_HIGHER:
-		SetPriorityClass(GetCurrentProcess(),ABOVE_NORMAL_PRIORITY_CLASS);
-		break;
-	case PRIORITY_LEVEL_HIGHEST:
-		SetPriorityClass(GetCurrentProcess(),HIGH_PRIORITY_CLASS);
-		break;
-#elif C_SET_PRIORITY
+#if C_SET_PRIORITY
 /* Linux use group as dosbox has mulitple threads under linux */
 	case PRIORITY_LEVEL_PAUSE:	// if DOSBox is paused, assume idle priority
 	case PRIORITY_LEVEL_LOWEST:
@@ -1175,7 +1022,7 @@ static void GUI_StartUp(Section * sec) {
 #endif
 
 	if (!sdl.desktop.full.width) {
-		LOG_MSG("Your fullscreen resolution can NOT be determined, it's assumed to be 1024x768.\nPlease edit the configuration file if this value is wrong.");
+		LOG_MSG("Your fullscreen resolution can NOT be determined, it's assumed to be 640x240.\nPlease edit the configuration file if this value is wrong.");
 		sdl.desktop.full.width=640;
 	}
 	if (!sdl.desktop.full.height) {
@@ -1251,7 +1098,9 @@ static void HandleMouseMotion(SDL_MouseMotionEvent * motion) {
 	// since this will translate to the touchscreen
 	float xmul = (float)sdl.mouse.max_x / (float)sdl.draw.width;
 	float ymul = (float)sdl.mouse.max_y / (float)sdl.draw.height;
-	LOG_MSG("xmul %f, ymul %f",xmul, ymul);
+	#ifdef J720_DBG
+	LOG_MSG("sdlmain: xmul %f, ymul %f",xmul, ymul);
+	#endif
 
 	if (sdl.mouse.locked || !sdl.mouse.autoenable)
 		Mouse_CursorMoved((float)motion->xrel*sdl.mouse.sensitivity/100.0f*xmul,
@@ -1696,7 +1545,7 @@ int main(int argc, char* argv[]) {
 	/* Display Welcometext in the console */
 	LOG_MSG("DOSBox version %s",VERSION);
 	LOG_MSG("Copyright 2002-2019 DOSBox Team, published under GNU GPL.");
-	LOG_MSG("modified version for HP Jornada 7xx.");
+	LOG_MSG("Modified version for HP Jornada 720.");
 	LOG_MSG("---");
 
 	/* Init SDL */

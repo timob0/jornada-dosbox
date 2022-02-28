@@ -634,9 +634,11 @@ static void VGA_DrawPart(Bitu lines) {
 	while (lines--) {
 		int render = (lowres || (vga.draw.lines_done+interlace) % 2);
 
-		Bit8u * data=VGA_DrawLine( vga.draw.address, vga.draw.address_line );
 		// draw every 2nd line only
-		if (render) RENDER_DrawLine(data);
+		if (render) {
+			Bit8u * data=VGA_DrawLine( vga.draw.address, vga.draw.address_line );
+			RENDER_DrawLine(data);
+		}
 
 		vga.draw.address_line++;
 		if (vga.draw.address_line>=vga.draw.address_line_total) {
